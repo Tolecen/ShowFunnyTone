@@ -4317,6 +4317,7 @@ static void log_callback_null(void *ptr, int level, const char *fmt, va_list vl)
 
 int video_merge(int argc, char **argv, EncoderProgressBlock progressBlock, EncoderCompletionBlock completionBlock)
 {
+    
     int ret;
     int64_t ti;
     
@@ -4324,8 +4325,15 @@ int video_merge(int argc, char **argv, EncoderProgressBlock progressBlock, Encod
     
     setvbuf(stderr,NULL,_IONBF,0); /* win32 runtime needs this */
     
+#ifdef DEBUG
+    av_log_set_level(AV_LOG_QUIET);
+
+#else
     av_log_set_flags(AV_LOG_SKIP_REPEATED);
     parse_loglevel(argc, argv, options);
+
+#endif
+    
     
     if(argc>1 && !strcmp(argv[1], "-d")){
         run_as_daemon=1;

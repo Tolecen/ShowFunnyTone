@@ -174,12 +174,12 @@
 //    [self.player prepareToPlay];
     
     
-    if (self.mMediaObject != nil && [self.mMediaObject getDuration] > THEME_ENABLE_MAX) {
-        _themeType = BABYVIDEO_FILTER;
-    } else {
-        _themeType = BABYVIDEO_THEME;
-    }
-    
+//    if (self.mMediaObject != nil && [self.mMediaObject getDuration] > THEME_ENABLE_MAX) {
+//        _themeType = BABYVIDEO_FILTER;
+//    } else {
+//        _themeType = BABYVIDEO_THEME;
+//    }
+//    
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -379,7 +379,7 @@
     .leftSpaceToView(self.view, 20)
     .bottomSpaceToView(line, 0);
     
-    if (self.mMediaObject != nil && [self.mMediaObject getDuration] > THEME_ENABLE_MAX) {
+    if (_outputHeight!=480) {
         NSArray *vButtonItemArray = @[@{NOMALKEY: @"baby_color_publish_bg",
                                         HEIGHTKEY:@"baby_color_red_height",
                                         TITLEKEY:@"滤镜",
@@ -411,6 +411,7 @@
     [_originMusic setTitleColor:[UIColor grayColor] forState:UIControlStateNormal];
     [_originMusic addTarget:self action:@selector(pressOriginMusicButton) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:_originMusic];
+    _originMusic.tag = 1;
     
     _originMusic.sd_layout
     .widthIs(86)
@@ -526,13 +527,20 @@
 
 - (void)pressOriginMusicButton
 {
-    _originMusic.selected = !_originMusic.selected;
-    [SVProgressHUD setDefaultStyle:SVProgressHUDStyleDark];
-    if (_originMusic.selected) {
+     [SVProgressHUD setDefaultStyle:SVProgressHUDStyleDark];
+    if (_originMusic.tag==1) {
         [SVProgressHUD showErrorWithStatus:@"原音关闭"];
-    } else {
-        [SVProgressHUD showSuccessWithStatus:@"原音开启"];
+        _originMusic.tag = 2;
+        [_originMusic setTitle:@"开启原音" forState:UIControlStateNormal];
     }
+    else
+    {
+         [SVProgressHUD showSuccessWithStatus:@"原音开启"];
+        _originMusic.tag= 1;
+        [_originMusic setTitle:@"关闭原音" forState:UIControlStateNormal];
+    }
+   
+
     [self restartPlayer];
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(1.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [SVProgressHUD dismiss];
@@ -626,21 +634,21 @@
         if (_themeType == BABYVIDEO_THEME) {
         
             if (![StringUtils isEmpty:_mCurrentMusicPath]) {
-                if (_originMusic.isSelected) {
+                if (_originMusic.tag==2) {
                     
                     aFilter = [NSString stringWithFormat:@"amovie=%@[audio];[in]volume=0.0[in];[in][audio]amix=inputs=2:duration=shortest:dropout_transition=2[temp];[temp]volume='if(lt(t,%d),1,max(1-(t-%d)/1,0))':eval=frame", _mCurrentMusicPath, (videoTime - 2), (videoTime - 2)];
                     
                 } else {
                     aFilter = [NSString stringWithFormat:@"amovie=%@[audio];[in][audio]amix=inputs=2:duration=shortest:dropout_transition=2[temp];[temp]volume='if(lt(t,%d),1,max(1-(t-%d)/1,0))':eval=frame", _mCurrentMusicPath, (videoTime - 2), (videoTime - 2)];
                 }
-            } else if (_originMusic.isSelected) {
+            } else if (_originMusic.tag==2) {
                 aFilter = @"[in]volume=0.0[in]";
             } else {
                 aFilter = [NSString stringWithFormat:@"[in]volume='if(lt(t,%d),1,max(1-(t-%d)/1,0))':eval=frame", (videoTime - 2), (videoTime - 2)];
             }
             
         } else {
-            if (_originMusic.isSelected) {
+            if (_originMusic.tag==2) {
                 aFilter = @"[in]volume=0.0[in]";
             } else {
                 aFilter = [NSString stringWithFormat:@"[in]volume='if(lt(t,%d),1,max(1-(t-%d)/1,0))':eval=frame", (videoTime - 2), (videoTime - 2)];
@@ -834,12 +842,12 @@
         if (![StringUtils isEmpty:_mCurrentMusicPath]) {
             [commanders addObject:@"-af"];
             
-            if (_originMusic.isSelected) {
+            if (_originMusic.tag==2) {
                 [commanders addObject:[NSString stringWithFormat:@"amovie=%@[audio];[in]volume=0.0[in];[in][audio]amix=inputs=2:duration=shortest:dropout_transition=2[temp];[temp]volume='if(lt(t,%d),1,max(1-(t-%d)/1,0))':eval=frame", _mCurrentMusicPath, (videoTime - 1), (videoTime - 1)]];
             } else {
                 [commanders addObject:[NSString stringWithFormat:@"amovie=%@[audio];[in][audio]amix=inputs=2:duration=shortest:dropout_transition=2[temp];[temp]volume='if(lt(t,%d),1,max(1-(t-%d)/1,0))':eval=frame", _mCurrentMusicPath, (videoTime - 1), (videoTime - 1)]];
             }
-        } else if (_originMusic.isSelected) {
+        } else if (_originMusic.tag==2) {
             [commanders addObject:@"-af"];
             [commanders addObject:@"[in]volume=0.0[in]"];
         } else {
@@ -854,7 +862,7 @@
             [commanders addObject:filterTheme];
         }
         
-        if (_originMusic.isSelected) {
+        if (_originMusic.tag==2) {
             [commanders addObject:@"-af"];
             [commanders addObject:@"[in]volume=0.0[in]"];
         } else {
